@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Memory Neckband - Privacy-First Dashboard</title>
+  <meta name="description" content="Offline-capable smart memory neckband companion dashboard with real-time privacy controls, house geo-grid mapping, and caregiver synchronization.">
+  <!-- Google Fonts: Outfit and Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="mode-user">
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" x2="12" y1="19" y2="22"></line>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">Smart Memory Neckband</h1>
+        <div class="brand-subtitle">Privacy-First Offline Companion</div>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <!-- Live Neckband Status Indicator -->
+      <div id="neckbandStatusPill" class="status-pill sleep" title="Neckband Hardware Status">
+        <span class="status-dot"></span>
+        <span id="neckbandStatusText">SLEEP MODE</span>
+        <span id="batteryPill" style="margin-left: 8px; opacity: 0.85;">🔋 98%</span>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="mode-toggle-group">
+        <button id="btnModeUser" class="mode-btn active" onclick="switchDashboardMode('user')">
+          👤 USER MODE
+        </button>
+        <button id="btnModeCaregiver" class="mode-btn" onclick="switchDashboardMode('caregiver')">
+          🩺 CAREGIVER MODE
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Emergency Alert Banner (when active) -->
+    <section id="emergencyBanner" class="emergency-banner">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <span style="font-size: 2rem;">🚨</span>
+        <div>
+          <strong id="emergencyTitle" style="font-size: 1.15rem; color: #FFFFFF;">CRITICAL ALERT: Emergency Detected!</strong>
+          <div id="emergencyDetails" style="font-size: 0.95rem; color: #FCA5A5;">High pulse combined with sudden impact/fall in Bathroom.</div>
+        </div>
+      </div>
+      <button class="btn-large btn-danger" onclick="acknowledgeAlert()">Acknowledge &amp; Call</button>
+    </section>
+
+    <!-- ====================================================================
+         1. USER MODE VIEW (High Contrast, Big Tactile Buttons, Read Aloud)
+         ==================================================================== -->
+    <section id="userView" class="view-section active-view">
+      
+      <!-- User Greeting & Quick TTS -->
+      <div class="user-hero">
+        <div>
+          <div class="user-headline" id="userGreeting">Good Day! Here is what's happening.</div>
+          <div class="user-subtext" id="userLocationSubtitle">Location: Inside • Living Room</div>
+        </div>
+        <div class="user-quick-actions">
+          <button class="btn-large btn-speech" onclick="speakDailySummary()">
+            🔊 Read Today Aloud
+          </button>
+          <button class="btn-large btn-secondary" onclick="openAddNoteModal()">
+            ✍️ Add a Quick Note
+          </button>
+        </div>
+      </div>
+
+      <!-- Tactile Navigation Tabs for User -->
+      <div class="user-tabs">
+        <button class="user-tab-btn active" onclick="switchUserTab('today')">📅 Today</button>
+        <button class="user-tab-btn" onclick="switchUserTab('history')">🕰️ Previous Days</button>
+        <button class="user-tab-btn" onclick="switchUserTab('notes')">📝 My Notes</button>
+        <button class="user-tab-btn" onclick="switchUserTab('map')">🗺️ House Map</button>
+      </div>
+
+      <!-- User Sub-tab: Today -->
+      <div id="userTabToday" class="user-subtab-content">
+        <div class="card-grid">
+          <!-- Who I Met Today -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">👥 Who I Met Today</h2>
+              <button class="read-btn" onclick="speakText(getEncountersSpeechText())">🔊 Read Aloud</button>
+            </div>
+            <div id="userTodayEncountersList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Today's Reminders -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">⏰ Today's Reminders</h2>
+              <button class="read-btn" onclick="speakText(getRemindersSpeechText())">🔊 Read Aloud</button>
+            </div>
+            <div id="userTodayRemindersList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Sub-tab: Previous Days -->
+      <div id="userTabHistory" class="user-subtab-content" style="display: none;">
+        <div class="card" style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label for="userDateSelect" style="font-weight: 700;">Pick a Date:</label>
+              <input type="date" id="userDateSelect" class="filter-input" onchange="loadUserHistoryForDate()">
+            </div>
+            <button class="btn-large btn-speech" onclick="speakPreviousDaySummary()">🔊 Read Selected Day Aloud</button>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">👥 People Met on this Day</h2>
+            </div>
+            <div id="userHistoryEncountersList"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">💬 Conversation Summaries &amp; Notes</h2>
+            </div>
+            <div id="userHistorySummariesList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Sub-tab: Notes -->
+      <div id="userTabNotes" class="user-subtab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📝 My Recorded Notes</h2>
+            <button class="btn-large btn-primary" onclick="openAddNoteModal()">+ Add Note (Type or Voice)</button>
+          </div>
+          <div id="userNotesList"></div>
+        </div>
+      </div>
+
+      <!-- User Sub-tab: House Map -->
+      <div id="userTabMap" class="user-subtab-content" style="display: none;">
+        <div class="map-card" style="margin-bottom: 20px;">
+          <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 8px;">🏠 Your House Privacy Map</h2>
+          <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 16px;">
+            Tap any room below to mark it as <strong style="color: var(--accent-danger);">Private (🔒)</strong> or <strong style="color: var(--accent-success);">Normal</strong>.
+            Inside private rooms, the neckband camera and microphone shut down completely!
+          </p>
+          <div id="userMapContainer" class="grid-blueprint-board">
+            <!-- Grid generated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ====================================================================
+         2. CAREGIVER MODE VIEW (Comprehensive Executive Clinical Dashboard)
+         ==================================================================== -->
+    <section id="caregiverView" class="view-section">
+      
+      <!-- Caregiver Navigation Tabs -->
+      <div class="caregiver-tabs">
+        <button class="cg-tab-btn active" onclick="switchCaregiverTab('overview')">📊 Overview</button>
+        <button class="cg-tab-btn" onclick="switchCaregiverTab('history')">🕰️ History &amp; Sightings</button>
+        <button class="cg-tab-btn" onclick="switchCaregiverTab('people')">👥 Recognised People</button>
+        <button class="cg-tab-btn" onclick="switchCaregiverTab('reminders')">⏰ Reminders Management</button>
+        <button class="cg-tab-btn" onclick="switchCaregiverTab('notes')">📝 Clinical Notes</button>
+        <button class="cg-tab-btn" onclick="switchCaregiverTab('house_map')">🗺️ House Map &amp; Audit Log</button>
+        <button class="cg-tab-btn" onclick="switchCaregiverTab('privacy_settings')">⚙️ Privacy Settings</button>
+      </div>
+
+      <!-- Caregiver Sub-tab: Overview -->
+      <div id="cgTabOverview" class="cg-subtab-content">
+        <!-- Quick Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-primary);">🩺</div>
+            <div>
+              <div class="stat-val" id="cgStatPrivacyState">SLEEP</div>
+              <div class="stat-lbl">Privacy State</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success);">📍</div>
+            <div>
+              <div class="stat-val" id="cgStatLocation">Inside</div>
+              <div class="stat-lbl" id="cgStatZone">Living Room</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-warning);">🔋</div>
+            <div>
+              <div class="stat-val" id="cgStatBattery">98%</div>
+              <div class="stat-lbl">Battery Level</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--accent-danger);">⚠️</div>
+            <div>
+              <div class="stat-val" id="cgStatAlerts">0</div>
+              <div class="stat-lbl">Active Alerts</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Alerts & Activity -->
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">🚨 Recent Emergency Alerts</h2>
+            </div>
+            <div id="cgOverviewAlertsList">No active emergency alerts.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">🔒 Privacy Mode State Changes</h2>
+            </div>
+            <div id="cgOverviewPrivacyLogsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caregiver Sub-tab: History -->
+      <div id="cgTabHistory" class="cg-subtab-content" style="display: none;">
+        <!-- Filters -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label class="filter-label" for="cgHistDate">Date:</label>
+            <input type="date" id="cgHistDate" class="filter-input" onchange="loadCaregiverHistory()">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label" for="cgHistPerson">Person:</label>
+            <input type="text" id="cgHistPerson" class="filter-input" placeholder="Name or Unknown #N" oninput="loadCaregiverHistory()">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label" for="cgHistZone">Zone:</label>
+            <select id="cgHistZone" class="filter-select" onchange="loadCaregiverHistory()">
+              <option value="All">All Rooms / Zones</option>
+              <option value="Living Room">Living Room</option>
+              <option value="Kitchen">Kitchen</option>
+              <option value="Master Bedroom">Master Bedroom</option>
+              <option value="Guest Bedroom">Guest Bedroom</option>
+              <option value="En-suite Bathroom">En-suite Bathroom</option>
+              <option value="Central Hallway">Central Hallway</option>
+              <option value="Dining Area">Dining Area</option>
+              <option value="Back Patio">Back Patio</option>
+              <option value="Outside">Outside</option>
+            </select>
+          </div>
+          <button class="btn-large btn-secondary" onclick="resetHistoryFilters()">Reset Filters</button>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom: 14px;">Sightings Log</h3>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Person</th>
+                    <th>Zone</th>
+                    <th>Confidence</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="cgSightingsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom: 14px;">Conversation Summaries</h3>
+            <div id="cgSummariesContainer"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caregiver Sub-tab: People -->
+      <div id="cgTabPeople" class="cg-subtab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">👥 Recognised Contacts &amp; Strangers</h2>
+              <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+                Unknown visitors become 'Familiar' after repeated encounters. You can customise their official name and relationship below; changes sync down to the neckband.
+              </p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Label</th>
+                  <th>Relationship</th>
+                  <th>Status</th>
+                  <th>Visits</th>
+                  <th>Last Seen</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="cgPeopleTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caregiver Sub-tab: Reminders -->
+      <div id="cgTabReminders" class="cg-subtab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">⏰ Reminders &amp; Medication Schedule</h2>
+              <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+                Scheduled reminders are read aloud offline by the neckband and phone companion.
+              </p>
+            </div>
+            <button class="btn-large btn-primary" onclick="openAddReminderModal()">+ Add Reminder</button>
+          </div>
+          <div id="cgRemindersList"></div>
+        </div>
+      </div>
+
+      <!-- Caregiver Sub-tab: Notes -->
+      <div id="cgTabNotes" class="cg-subtab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📝 Collaborative Notes &amp; Observations</h2>
+            <button class="btn-large btn-primary" onclick="openAddNoteModal()">+ Add Caregiver Note</button>
+          </div>
+          <div id="cgNotesList"></div>
+        </div>
+      </div>
+
+      <!-- Caregiver Sub-tab: House Map & Audit Log -->
+      <div id="cgTabHouseMap" class="cg-subtab-content" style="display: none;">
+        <div class="map-container">
+          <!-- Visual Grid -->
+          <div class="map-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <div>
+                <h2 style="font-size: 1.3rem; font-weight: 700;">🏠 House Layout Geo-Grid</h2>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                  Tap a room button on the right or click individual grid cells to toggle privacy.
+                </div>
+              </div>
+              <div style="font-size: 0.9rem; color: var(--accent-cyan); font-weight: 700;">
+                Current Location: <span id="cgMapCurrentZone">Living Room</span>
+              </div>
+            </div>
+            <div id="caregiverMapContainer" class="grid-blueprint-board"></div>
+          </div>
+
+          <!-- Room Legend & Privacy Toggles -->
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom: 12px;">Rooms &amp; Privacy</h3>
+            <div id="roomLegendContainer" class="room-legend"></div>
+          </div>
+        </div>
+
+        <!-- Private Area Change Audit Log -->
+        <div class="card" style="margin-top: 24px;">
+          <h3 class="card-title" style="margin-bottom: 14px;">📜 Private Area Modification Audit Log</h3>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Area / Cell</th>
+                  <th>Status</th>
+                  <th>Modified By</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="cgAuditLogTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caregiver Sub-tab: Privacy Settings -->
+      <div id="cgTabPrivacySettings" class="cg-subtab-content" style="display: none;">
+        <div class="card" style="max-width: 700px;">
+          <h2 class="card-title" style="margin-bottom: 18px;">⚙️ Device Privacy &amp; Retention Configuration</h2>
+          
+          <div class="form-group">
+            <label class="form-label" for="settingOutsideInterval">Outside-the-House Check Interval (seconds)</label>
+            <input type="number" id="settingOutsideInterval" class="form-control" value="10" min="2" max="60">
+            <small style="color: var(--text-dim);">Controls how often the neckband takes a short in-memory sample to check if the user is in a public toilet/bathroom.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="settingSampleDuration">Outside Sample Length (milliseconds)</label>
+            <input type="number" id="settingSampleDuration" class="form-control" value="200" min="50" max="1000">
+            <small style="color: var(--text-dim);">Duration of the short memory-only surroundings check. Discarded immediately.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="settingStrangerRetention">Stranger Data Retention (days)</label>
+            <input type="number" id="settingStrangerRetention" class="form-control" value="30" min="7" max="90">
+            <small style="color: var(--text-dim);">One-time strangers are permanently purged after this period. Familiar contacts are retained indefinitely.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="settingNotesRetention">Conversation Notes Retention (days)</label>
+            <input type="number" id="settingNotesRetention" class="form-control" value="60" min="14" max="180">
+            <small style="color: var(--text-dim);">Time window for retaining conversation notes and transcripts (1 to 3 months).</small>
+          </div>
+
+          <button class="btn-large btn-primary" onclick="savePrivacySettings()">Save Privacy Settings</button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ====================================================================
+       MODALS
+       ==================================================================== -->
+
+  <!-- Modal: Add / Edit Reminder -->
+  <div id="modalReminder" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalReminderTitle" class="modal-title">⏰ Add New Reminder</h3>
+        <button class="close-btn" onclick="closeModal('modalReminder')">&times;</button>
+      </div>
+      <form id="formReminder" onsubmit="handleSaveReminder(event)">
+        <input type="hidden" id="remInputId">
+        <div class="form-group">
+          <label class="form-label" for="remInputTitle">Reminder Title</label>
+          <input type="text" id="remInputTitle" class="form-control" placeholder="e.g. Heart Medication" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="remInputDesc">Instructions / Details</label>
+          <textarea id="remInputDesc" class="form-control" rows="2" placeholder="e.g. Take 1 tablet with full glass of water"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="remInputTime">Scheduled Time</label>
+          <input type="text" id="remInputTime" class="form-control" placeholder="e.g. 18:00 or 2026-10-24 18:00" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="remInputCategory">Category</label>
+          <select id="remInputCategory" class="form-control">
+            <option value="medication">💊 Medication</option>
+            <option value="appointment">🩺 Doctor Appointment</option>
+            <option value="schedule">📅 Daily Routine</option>
+          </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button type="button" class="btn-large btn-secondary" onclick="closeModal('modalReminder')">Cancel</button>
+          <button type="submit" class="btn-large btn-primary">Save Reminder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Note (Type or Voice) -->
+  <div id="modalNote" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">📝 Add Note</h3>
+        <button class="close-btn" onclick="closeModal('modalNote')">&times;</button>
+      </div>
+      <form id="formNote" onsubmit="handleSaveNote(event)">
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="form-label" for="noteInputContent" style="margin-bottom: 0;">Note Content</label>
+            <button type="button" id="btnVoiceInput" class="read-btn" onclick="toggleVoiceDictation()">
+              🎤 Voice Dictate
+            </button>
+          </div>
+          <textarea id="noteInputContent" class="form-control" rows="4" placeholder="Speak or type your note here..." required></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button type="button" class="btn-large btn-secondary" onclick="closeModal('modalNote')">Cancel</button>
+          <button type="submit" class="btn-large btn-primary">Save Note</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Person Label & Relationship -->
+  <div id="modalPersonEdit" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">👥 Customise Person Details</h3>
+        <button class="close-btn" onclick="closeModal('modalPersonEdit')">&times;</button>
+      </div>
+      <form id="formPersonEdit" onsubmit="handleSavePerson(event)">
+        <input type="hidden" id="personEditId">
+        <div class="form-group">
+          <label class="form-label" for="personEditLabel">Name / Label</label>
+          <input type="text" id="personEditLabel" class="form-control" placeholder="e.g. Ananya" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="personEditRelation">Relationship to Senior</label>
+          <input type="text" id="personEditRelation" class="form-control" placeholder="e.g. Granddaughter, Doctor, Neighbor">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button type="button" class="btn-large btn-secondary" onclick="closeModal('modalPersonEdit')">Cancel</button>
+          <button type="submit" class="btn-large btn-primary">Save &amp; Sync to Neckband</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: First-Time Setup Welcome & Private Area Selection Prompt -->
+  <div id="modalFirstTimeSetup" class="modal-overlay">
+    <div class="modal-box" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🛡️ Welcome to Smart Memory Neckband</h3>
+      </div>
+      <p style="color: #E2E8F0; font-size: 1.05rem; margin-bottom: 16px;">
+        To protect privacy, the neckband will <strong>never capture audio or video in private areas</strong> (such as bathrooms or bedrooms).
+      </p>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">
+        Please review your house rooms now and select any areas you wish to designate as <strong>Private (🔒)</strong>. You can change these at any time.
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button class="btn-large btn-primary" onclick="completeFirstTimeSetup()">
+          Review House Private Areas Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Application Bundle -->
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

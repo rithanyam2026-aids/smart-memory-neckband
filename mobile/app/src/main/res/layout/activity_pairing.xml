@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_horizontal"
+    android:background="#0F172A">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Smart Memory Neckband"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginTop="32dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Offline Privacy-First Companion"
+        android:textColor="#94A3B8"
+        android:textSize="14sp"
+        android:layout_marginBottom="32dp" />
+
+    <!-- Listening Status Indicator Pill -->
+    <TextView
+        android:id="@+id/tvStatusIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🌙 SLEEP MODE (STANDBY)"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="16dp"
+        android:background="#334155"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/tvPrivacyNotice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Neckband is sleeping. Waiting for someone to talk or approach."
+        android:textColor="#CBD5E1"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:layout_marginBottom="32dp" />
+
+    <!-- Setup Fields -->
+    <EditText
+        android:id="@+id/etDeviceId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Neckband Device ID (e.g. neckband-01)"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#64748B"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/etAccountPin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Account PIN (e.g. 0000)"
+        android:inputType="numberPassword"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#64748B"
+        android:padding="12dp"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/btnPair"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Pair &amp; Start Background Companion"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#3B82F6"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnBatteryOptimization"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Disable Battery Optimization (Always-On)"
+        android:textColor="#94A3B8"
+        style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+</LinearLayout>
