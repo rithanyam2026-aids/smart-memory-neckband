@@ -10,3 +10,5 @@ paho-mqtt>=2.0.0
 # Optional / acceleration dependencies:
 # numpy>=1.26.0
 # opencv-python>=4.9.0
+flask
+gunicorn
